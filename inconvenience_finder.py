@@ -82,7 +82,7 @@ class InconvenienceFinder:
             loc1 = str(lesson1.get('LOCATION'))
             loc2 = str(lesson2.get('LOCATION'))
 
-            if 'Е-' in loc1 or 'Е-' in loc2 and not ('Е-' in loc1 and 'Е-' in loc2):  # If going to/from corpus E is required
+            if ('Е-' in loc1 or 'Е-' in loc2) and not ('Е-' in loc1 and 'Е-' in loc2):  # If going to/from corpus E is required
                 return True
 
             if ('ФОК' in loc1 or 'ФОК' in loc2) and \
