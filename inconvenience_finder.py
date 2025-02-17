@@ -23,7 +23,7 @@ class InconvenienceFinder:
 
             if self._check_for_window(lesson1, lesson2):
                 time1 = str(lesson1.end)[11:16]
-                time2 = str(lesson2.end)[11:16]
+                time2 = str(lesson2.start)[11:16]
                 inconveniences.append(f'Window from {time1} to {time2}')
 
             if self._check_for_long_walk_over_short_break(lesson1, lesson2):
@@ -82,7 +82,7 @@ class InconvenienceFinder:
             loc1 = str(lesson1.get('LOCATION'))
             loc2 = str(lesson2.get('LOCATION'))
 
-            if 'Е-' in loc1 or 'Е-' in loc2:  # If going to/from corpus E is required
+            if 'Е-' in loc1 or 'Е-' in loc2 and not ('Е-' in loc1 and 'Е-' in loc2):  # If going to/from corpus E is required
                 return True
 
             if ('ФОК' in loc1 or 'ФОК' in loc2) and \
@@ -92,7 +92,7 @@ class InconvenienceFinder:
 
     @staticmethod
     def _check_for_campus_switching(lesson1: Event, lesson2: Event) -> bool:
-        if not lesson1.get('LOCATION') or lesson2.get('LOCATION'):  # Sometimes there's no location set for lesson
+        if not lesson1.get('LOCATION') or not lesson2.get('LOCATION'):  # Sometimes there's no location set for lesson
             return False
 
         campus1 = str(lesson1.get('LOCATION'))[-6:].strip('( )')  # Every location has its campus signature at the end
