@@ -1,6 +1,7 @@
 import sys
 from type_and_id_parser import TypeAndIdParser
 from inconvenience_finder import InconvenienceFinder
+from datetime import datetime
 
 
 def ask_type_and_name() -> tuple:
@@ -31,7 +32,8 @@ if __name__ == '__main__':
 
     inconveniences = finder.get_all_inconveniences(type_, id_)
     if inconveniences:
-        for date in inconveniences.keys():
+        dates = sorted(inconveniences.keys(), key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
+        for date in dates:
             print(f'----- {date} -----')
             for inconvenience in inconveniences[date]:
                 print(inconvenience)

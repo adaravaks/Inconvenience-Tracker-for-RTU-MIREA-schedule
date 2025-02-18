@@ -1,8 +1,8 @@
-from icalendar import Calendar, vDatetime, Event
-from icalendar.parser import Contentline
 import requests
 from collections import defaultdict
 from datetime import timedelta, datetime
+from icalendar import Calendar, vDatetime, Event
+from icalendar.parser import Contentline
 
 
 class InconvenienceFinder:
@@ -10,7 +10,10 @@ class InconvenienceFinder:
         schedules = self._get_schedules_by_type_and_id(type_, id_)
         inconveniences_by_date = {}
         for key in schedules.keys():
-            daily_inconveniences = self._get_daily_inconveniences(schedules[key])
+            day_schedule = schedules[key]
+            if 'неделя' in day_schedule[0].get('SUMMARY'):
+                day_schedule = day_schedule[1:]
+            daily_inconveniences = self._get_daily_inconveniences(day_schedule)
             if daily_inconveniences:
                 inconveniences_by_date[key] = daily_inconveniences
         return inconveniences_by_date
@@ -45,18 +48,37 @@ class InconvenienceFinder:
         return inconveniences
 
     def _get_schedules_by_type_and_id(self, type_: int, id_: int) -> dict[str, list[Event]]:
+        """This one might seem extremely unclear, so here's what it does step by step:
+           1. Getting the iCal relevant for specific type and id from other function.
+           2. Starting to iterate over the events in that iCal. It's important to note that
+           the iCal only describes two-week schedule, the rest is derived by applying specific
+           recurrence rules for each event in that two-week schedule.
+           2.1. Determining how many times should the event repeat itself. Some events are only formal
+           and are not the part of the actual schedule, so they should have no recurrences.
+           2.2. iCal describes 2-week worth of schedule, and the semester schedule is spanned across 16 weeks,
+           so it is only natural to derive the whole schedule by reiterating over the iCal 8 times. That's
+           exactly what it does.
+           2.2.1. For each 2-week iteration, event dates are calculated accordingly, and then listed on the
+           dict which will later be returned. Also, the "exception dates" of all events are being taken
+           into consideration.
+           3. The resulting dict with all the daily schedules is returned"""
         cal = self._get_ical_by_type_and_id(type_, id_)
         daily_calendars = defaultdict(list)  # yyyy-mm-dd: [schedule]
 
         for event in cal.events:
+            summary = event.get('SUMMARY')
             date = str(event.start)[:10]
-            if 'неделя' not in event.get('SUMMARY') and 'занятия в дистанционном формате' not in event.get('SUMMARY'):
+            iterations = 8 if 'неделя' not in summary and 'занятия' not in summary else 1
+
+            for fortnight in range(iterations):  # fortnight means two weeks, do not confuse with the game fortnite
                 if event.get('EXDATE') is not None:  # if event has certain exception dates
-                    exdates = Contentline(
-                        event.get('EXDATE').to_ical())  # exdates are dates when lessons do not follow ->
-                    start_dt = str(vDatetime(event.start).to_ical())[2:-1]  # -> their regular recurrence rules
-                    if start_dt not in exdates:
-                        daily_calendars[date].append(event)
+                    exdates = Contentline(event.get('EXDATE').to_ical()).split(',')  # exdates are dates when events do not follow ->
+                    exdates = [datetime.strptime(dt[:8], '%Y%m%d') for dt in exdates]  # -> their regular recurrence rules
+                    start_dt = str(vDatetime(event.start).to_ical())[2:-1]  # start_dt is the datetime of the very first occurrence of event
+                    recurr_dt = datetime.strptime(start_dt[:8], '%Y%m%d') + timedelta(weeks=2*fortnight)  # recurr_dt is the actual date of event
+                    if recurr_dt not in exdates:
+                        recurr_date = str(recurr_dt)[:10]
+                        daily_calendars[recurr_date].append(event)
                 else:
                     daily_calendars[date].append(event)
         return daily_calendars
