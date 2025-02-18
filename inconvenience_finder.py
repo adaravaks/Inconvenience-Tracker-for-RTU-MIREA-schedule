@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from collections import defaultdict
 from datetime import timedelta, datetime
 from icalendar import Calendar, vDatetime, Event
@@ -38,8 +40,8 @@ class InconvenienceFinder:
                                       f'({time1}-{time2})')
 
             if self._check_for_campus_switching(lesson1, lesson2):
-                campus1 = str(lesson1.get('LOCATION'))[-6:].strip('( )')
-                campus2 = str(lesson2.get('LOCATION'))[-6:].strip('( )')
+                campus1 = str(lesson1.get('LOCATION')).split()[-1].strip('( )')
+                campus2 = str(lesson2.get('LOCATION')).split()[-1].strip('( )')
                 time1 = str(lesson1.end)[11:16]
                 time2 = str(lesson2.start)[11:16]
                 inconveniences.append(f'Transfer from {campus1} to {campus2} is required ' +
@@ -47,7 +49,7 @@ class InconvenienceFinder:
 
         return inconveniences
 
-    def _get_schedules_by_type_and_id(self, type_: int, id_: int) -> dict[str, list[Event]]:
+    def _get_schedules_by_type_and_id(self, type_: int, id_: int) -> dict[str, list[Event]]:  # TODO: tidy up
         """This one might seem extremely unclear, so here's what it does step by step:
            1. Getting the iCal relevant for specific type and id from other function.
            2. Starting to iterate over the events in that iCal. It's important to note that
@@ -66,28 +68,35 @@ class InconvenienceFinder:
         daily_calendars = defaultdict(list)  # yyyy-mm-dd: [schedule]
 
         for event in cal.events:
-            summary = event.get('SUMMARY')
-            date = str(event.start)[:10]
-            iterations = 8 if 'неделя' not in summary and 'занятия' not in summary else 1
+            if 'неделя' not in event.get('SUMMARY') and 'занятия в дистанционном формате' not in event.get('SUMMARY'):
+                summary = event.get('SUMMARY')
+                date = str(event.start)[:10]
+                iterations = 8 if 'неделя' not in summary and 'занятия' not in summary else 1
 
-            for fortnight in range(iterations):  # fortnight means two weeks, do not confuse with the game fortnite
-                if event.get('EXDATE') is not None:  # if event has certain exception dates
-                    exdates = Contentline(event.get('EXDATE').to_ical()).split(',')  # exdates are dates when events do not follow ->
-                    exdates = [datetime.strptime(dt[:8], '%Y%m%d') for dt in exdates]  # -> their regular recurrence rules
-                    start_dt = str(vDatetime(event.start).to_ical())[2:-1]  # start_dt is the datetime of the very first occurrence of event
-                    recurr_dt = datetime.strptime(start_dt[:8], '%Y%m%d') + timedelta(weeks=2*fortnight)  # recurr_dt is the actual date of event
-                    if recurr_dt not in exdates:
-                        recurr_date = str(recurr_dt)[:10]
-                        daily_calendars[recurr_date].append(event)
-                else:
-                    daily_calendars[date].append(event)
+                for fortnight in range(iterations):  # fortnight means two weeks, do not confuse with the game fortnite
+                    if event.get('EXDATE') is not None:  # if event has certain exception dates
+                        exdates = Contentline(event.get('EXDATE').to_ical()).split(',')  # exdates are dates when events do not follow ->
+                        exdates = [datetime.strptime(dt[:8], '%Y%m%d') for dt in exdates]  # -> their regular recurrence rules
+                        start_dt = str(vDatetime(event.start).to_ical())[2:-1]  # start_dt is the datetime of the very first occurrence of event
+                        recurr_dt = datetime.strptime(start_dt[:8], '%Y%m%d') + timedelta(weeks=2*fortnight)  # recurr_dt is the actual date of event
+                        if recurr_dt not in exdates:
+                            recurr_date = str(recurr_dt)[:10]
+                            daily_calendars[recurr_date].append(event)
+                    else:
+                        daily_calendars[date].append(event)
         return daily_calendars
 
     @staticmethod
     def _get_ical_by_type_and_id(type_: int, id_: int) -> Calendar:
         dt = datetime.now()
-        r = requests.get(
-            f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={type_}_{id_}')
+        session = requests.Session()
+        retry = Retry(connect=10**9, backoff_factor=0.5)  # that's right, there can be a billion reconnect attempts in case of connection failure
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        r = session.get(
+            f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={type_}_{id_}',
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0'})
         cal_text = r.json()['pageProps']['scheduleLoadInfo'][0]['iCalContent']
         cal = Calendar.from_ical(cal_text)
         return cal
@@ -117,8 +126,8 @@ class InconvenienceFinder:
         if not lesson1.get('LOCATION') or not lesson2.get('LOCATION'):  # Sometimes there's no location set for lesson
             return False
 
-        campus1 = str(lesson1.get('LOCATION'))[-6:].strip('( )')  # Every location has its campus signature at the end
-        campus2 = str(lesson2.get('LOCATION'))[-6:].strip('( )')  # 6 last characters are enough to determine the campus
+        campus1 = str(lesson1.get('LOCATION')).split()[-1].strip('( )')  # Every location has its campus signature at the end
+        campus2 = str(lesson2.get('LOCATION')).split()[-1].strip('( )')
 
         if campus2 != campus1 and campus1 != 'СДО' and campus2 != 'СДО':  # Online lessons != campus switching
             return True

@@ -1,7 +1,9 @@
 import requests
+import json
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from os.path import isfile
 from threading import Thread
-import json
 from datetime import datetime
 
 
@@ -36,7 +38,13 @@ class TypeAndIdParser:
 
     def _save_name_by_type_and_id(self, type_: int, id_: int) -> None:
         dt = datetime.now()
-        r = requests.get(f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={type_}_{id_}')
+        session = requests.Session()
+        retry = Retry(connect=10 ** 9,backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        r = session.get(f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={type_}_{id_}',
+                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0'})
         try:
             name = r.json()['pageProps']['scheduleLoadInfo'][0]['title']
             self._ids_by_type_and_name[type_][name] = id_
