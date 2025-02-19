@@ -18,7 +18,7 @@ class TypeAndIdParser:
                 self._ids_by_type_and_name = json.loads(file.read())
 
     def get_id(self, type_: int, name: str) -> int:
-        return self._ids_by_type_and_name[type_][name]
+        return self._ids_by_type_and_name[str(type_)][name]
 
     def _json_dump_all(self) -> None:
         with open('ids_by_type_and_name.json', 'w', encoding='utf-8') as file:

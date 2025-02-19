@@ -7,19 +7,14 @@ from type_and_id_parser import TypeAndIdParser
 from inconvenience_finder import InconvenienceFinder
 
 
-def ask_type_and_name() -> tuple:
-    s1 = 'Введите 1 для поиска по группам или 2 для поиска по преподавателям: '
-    type_ = input(s1)
-    s2 = 'Введите название группы строго в формате "АААА-00-00": '
-    s3 = 'Введите ФИО преподавателя строго в формате "Фамилия И. О.": '
-    if type_ == '1':
-        name = input(s2)
-    elif type_ == '2':
-        name = input(s3)
-    else:
-        print('Wrong input')
-        sys.exit()
-    return type_, name.strip()
+def determine_type(name: str) -> int:
+    return 1 if any(char.isdigit() for char in name) else 2
+
+
+def ask_name() -> str:
+    s = 'Введите название группы строго в формате "АААА-00-00" или ФИО преподавателя строго в формате "Фамилия И. О.":'
+    name = input(s)
+    return name.strip()
 
 
 def get_inconveniences_for_everyone(finder: InconvenienceFinder) -> dict[str, dict[str, list[str]]]:  # {date: {name: [inconveniences]}}
