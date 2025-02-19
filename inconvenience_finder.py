@@ -29,14 +29,14 @@ class InconvenienceFinder:
             if self._check_for_window(lesson1, lesson2):
                 time1 = str(lesson1.end)[11:16]
                 time2 = str(lesson2.start)[11:16]
-                inconveniences.append(f'Window from {time1} to {time2}')
+                inconveniences.append(f'Окно с {time1} до {time2}')
 
             if self._check_for_long_walk_over_short_break(lesson1, lesson2):
                 loc1 = str(lesson1.get('LOCATION'))
                 loc2 = str(lesson2.get('LOCATION'))
                 time1 = str(lesson1.end)[11:16]
                 time2 = str(lesson2.start)[11:16]
-                inconveniences.append(f'The distance from {loc1} to {loc2} has to be crossed in 10 minutes ' +
+                inconveniences.append(f'Нужно дойти от {loc1} до {loc2} за 10 минут ' +
                                       f'({time1}-{time2})')
 
             if self._check_for_campus_switching(lesson1, lesson2):
@@ -44,7 +44,7 @@ class InconvenienceFinder:
                 campus2 = str(lesson2.get('LOCATION')).split()[-1].strip('( )')
                 time1 = str(lesson1.end)[11:16]
                 time2 = str(lesson2.start)[11:16]
-                inconveniences.append(f'Transfer from {campus1} to {campus2} is required ' +
+                inconveniences.append(f'Нужно добраться от корпуса {campus1} до корпуса {campus2} ' +
                                       f'({time1}-{time2})')
 
         return inconveniences
