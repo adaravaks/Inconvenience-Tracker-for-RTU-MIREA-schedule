@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from inconvenience_finder import InconvenienceFinder
-from type_and_id_parser import TypeAndIdParser
-from main import determine_type, get_inconveniences_for_everyone as get_IfE
+from .inconvenience_finder import InconvenienceFinder
+from .type_and_id_parser import TypeAndIdParser
+from .main import determine_type, get_inconveniences_for_everyone as get_IfE
 
 
 app = FastAPI()

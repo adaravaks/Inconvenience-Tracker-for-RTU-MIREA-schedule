@@ -3,8 +3,8 @@ import json
 from datetime import datetime
 from time import time
 from concurrent.futures import ThreadPoolExecutor
-from type_and_id_parser import TypeAndIdParser
-from inconvenience_finder import InconvenienceFinder
+from .type_and_id_parser import TypeAndIdParser
+from .inconvenience_finder import InconvenienceFinder
 
 
 def determine_type(name: str) -> int:
