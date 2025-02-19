@@ -18,7 +18,10 @@ class InconvenienceFinder:
             daily_inconveniences = self._get_daily_inconveniences(day_schedule)
             if daily_inconveniences:
                 inconveniences_by_date[key] = daily_inconveniences
-        return inconveniences_by_date
+
+        sorted_dates = sorted(inconveniences_by_date.keys(), key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
+        sorted_ibd = {date: inconveniences_by_date[date] for date in sorted_dates}
+        return sorted_ibd
 
     def _get_daily_inconveniences(self, schedule: list[Event]) -> list[str]:
         inconveniences = []
@@ -50,7 +53,7 @@ class InconvenienceFinder:
         return inconveniences
 
     def _get_schedules_by_type_and_id(self, type_: int, id_: int) -> dict[str, list[Event]]:  # TODO: tidy up
-        """This one might seem extremely unclear, so here's what it does step by step:
+        """This one might seem unclear, so here's what it does step by step:
            1. Getting the iCal relevant for specific type and id from other function.
            2. Starting to iterate over the events in that iCal. It's important to note that
            the iCal only describes two-week schedule, the rest is derived by applying specific
