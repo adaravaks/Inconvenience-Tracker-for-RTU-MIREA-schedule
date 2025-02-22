@@ -10,7 +10,7 @@ from inconvenience_finder import InconvenienceFinder
 from main import determine_type, get_inconveniences_for_everyone as get_IfE
 
 
-class DBhandler:  # TODO: implement update_ids()
+class DBhandler:
     def __init__(self):
         self.connection_string = (f'host={os.getenv('DB_HOST')} ' +
                                   f'port={os.getenv('DB_PORT')} ' +

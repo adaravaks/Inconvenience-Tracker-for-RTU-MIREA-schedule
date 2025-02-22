@@ -26,15 +26,7 @@ except psycopg.errors.OperationalError:
             """)
 
 with psycopg.connect(conn_string) as conn:
-    with conn.cursor() as cur:  # creates the tables if they don't exist yet
-        cur.execute("""
-                    CREATE TABLE IF NOT EXISTS schedule_ids (
-                        id serial PRIMARY KEY,
-                        entity_name text,
-                        entity_type integer,
-                        schedule_id integer)
-                    """)
-
+    with conn.cursor() as cur:  # creates the table if it doesn't exist yet
         cur.execute("""
                     CREATE TABLE IF NOT EXISTS inconveniences (
                         id serial PRIMARY KEY,

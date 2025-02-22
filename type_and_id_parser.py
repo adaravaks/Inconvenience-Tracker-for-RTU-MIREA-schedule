@@ -8,9 +8,9 @@ from datetime import datetime
 
 
 class TypeAndIdParser:
-    def __init__(self):
+    def __init__(self, update_json_on_init=False):
         self._ids_by_type_and_name = {1: {}, 2: {}}  # 1-groups, 2-professors
-        if not isfile('ids_by_type_and_name.json'):
+        if not isfile('ids_by_type_and_name.json') or update_json_on_init:
             self._parse_all_types_and_ids()
             self._json_dump_all()
         else:

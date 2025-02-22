@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 sys.path.append(os.getcwd())  # prevents a nasty ModuleNotFoundError for imports below
 from postgres_db.handler import DBhandler
+from type_and_id_parser import TypeAndIdParser
 
 
 handler = DBhandler()
@@ -29,7 +30,14 @@ def refresh_db_data() -> None:
     print('INFO: database refreshed')
 
 
+def refresh_id_data() -> None:
+    print('INFO: started refreshing id data')
+    TypeAndIdParser(update_json_on_init=True)
+    print('INFO: id data refreshed')
+
+
 scheduler.add_job(refresh_db_data, 'interval', hours=4)  # db data will be refreshed on startup and then every 4 hours
+scheduler.add_job(refresh_id_data, 'interval', hours=4)  # same as db data but doesn't refresh on startup
 
 
 @app.get('/inconveniences_for_everyone')
