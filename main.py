@@ -3,8 +3,12 @@ import json
 from datetime import datetime
 from time import time
 from concurrent.futures import ThreadPoolExecutor
-from .type_and_id_parser import TypeAndIdParser
-from .inconvenience_finder import InconvenienceFinder
+try:
+    from .type_and_id_parser import TypeAndIdParser
+    from .inconvenience_finder import InconvenienceFinder
+except ImportError:
+    from type_and_id_parser import TypeAndIdParser
+    from inconvenience_finder import InconvenienceFinder
 
 
 def determine_type(name: str) -> int:
@@ -43,14 +47,15 @@ if __name__ == '__main__':
     id_parser = TypeAndIdParser()
     finder = InconvenienceFinder()
 
-    mirea_inconveniences = get_inconveniences_for_everyone(finder)
-    dates = sorted(mirea_inconveniences.keys(), key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
-    for date in dates:
-        print(f'--------------- {date} ---------------')
-        for name in mirea_inconveniences[date].keys():
-            print(f'    {name}:')
-            for inconvenience in mirea_inconveniences[date][name]:
-                print(inconvenience)
-            print()
-    end = time()
-    print(end-start)
+    # mirea_inconveniences = get_inconveniences_for_everyone(finder)
+    # dates = sorted(mirea_inconveniences.keys(), key=lambda x: datetime.strptime(x, '%Y-%m-%d'))
+    # for date in dates:
+    #     print(f'--------------- {date} ---------------')
+    #     for name in mirea_inconveniences[date].keys():
+    #         print(f'    {name}:')
+    #         for inconvenience in mirea_inconveniences[date][name]:
+    #             print(inconvenience)
+    #         print()
+    # end = time()
+    # print(end-start)
+    print(InconvenienceFinder().get_all_inconveniences(1, 4791))
