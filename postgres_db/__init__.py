@@ -26,7 +26,7 @@ except psycopg.errors.OperationalError:
             """)
 
 with psycopg.connect(conn_string) as conn:
-    with conn.cursor() as cur:  # creates the table if it doesn't exist yet
+    with conn.cursor() as cur:  # creates the tables if they don't exist yet
         cur.execute("""
                     CREATE TABLE IF NOT EXISTS inconveniences (
                         id serial PRIMARY KEY,
@@ -35,4 +35,13 @@ with psycopg.connect(conn_string) as conn:
                         entity_name text,
                         start_time timestamp,
                         message text)
+                    """)
+
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS app_requests (
+                        id serial PRIMARY KEY,
+                        request_uuid text,
+                        dt_submitted timestamp,
+                        status text,
+                        dt_finished timestamp)
                     """)
