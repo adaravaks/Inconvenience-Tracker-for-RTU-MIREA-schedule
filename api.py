@@ -18,7 +18,8 @@ handler = DBhandler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # before the app starts taking requests, it will load/refresh db data
-    handler.update_inconveniences_for_everyone()
+    #TypeAndIdParser(update_json_on_init=True)
+    handler.update_inconveniences_for_everyone(request_uuid='LAUNCH')
     yield
 
 
@@ -39,8 +40,14 @@ def refresh_id_data() -> None:
     print('INFO: id data refreshed')
 
 
+scheduler.add_job(refresh_id_data, 'interval', hours=3)  # same as db data but doesn't refresh on startup
 scheduler.add_job(refresh_db_data, 'interval', hours=4)  # db data will be refreshed on startup and then every 4 hours
-scheduler.add_job(refresh_id_data, 'interval', hours=4)  # same as db data but doesn't refresh on startup
+
+
+@app.get('/inconvenience_changes')
+def get_inconvenience_changes() -> dict[str, list[dict[str, str]]]:
+    changes = handler.get_inconvenience_changes()
+    return {'changes': changes}
 
 
 @app.get('/current_inconveniences_for_everyone')
@@ -71,7 +78,7 @@ def get_inconveniences_for_everyone() -> dict[str, dict[str, list[str]]]:
 
 @app.get("/inconveniences")
 def get_inconveniences(name: str) -> dict[str, list[str]]:
-    if handler.is_currently_refreshing_data():
+    if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
         inconveniences = handler.get_inconveniences(name)
     else:
         finder = InconvenienceFinder()

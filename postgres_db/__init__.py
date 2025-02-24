@@ -45,3 +45,13 @@ with psycopg.connect(conn_string) as conn:
                         status text,
                         dt_finished timestamp)
                     """)
+
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS inconvenience_changes (
+                        id serial PRIMARY KEY,
+                        dt_noticed timestamp,
+                        change_type text,
+                        entity_name text,
+                        inconvenience_date text,
+                        message text)
+                    """)
