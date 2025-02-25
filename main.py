@@ -26,12 +26,12 @@ def get_inconveniences_for_everyone(finder: InconvenienceFinder) -> dict[str, di
         ids_by_type_and_name = json.loads(f.read())
     all_inconveniences_in_mirea = {}
 
-    for type_ in range(2, 0, -1):  # first professors, then students
+    for entity_type in range(2, 0, -1):  # first professors, then students
         with ThreadPoolExecutor(max_workers=800) as executor:
             futures = {}
-            for name in ids_by_type_and_name[str(type_)].keys():
-                id_ = ids_by_type_and_name[str(type_)][name]
-                futures[name] = (executor.submit(finder.get_all_inconveniences, type_, id_))
+            for name in ids_by_type_and_name[str(entity_type)].keys():
+                schedule_id = ids_by_type_and_name[str(entity_type)][name]
+                futures[name] = (executor.submit(finder.get_all_inconveniences, entity_type, schedule_id))
 
         for name in futures.keys():
             inconveniences = futures[name].result()

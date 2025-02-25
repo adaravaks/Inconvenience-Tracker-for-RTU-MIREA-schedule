@@ -8,8 +8,8 @@ from icalendar.parser import Contentline
 
 
 class InconvenienceFinder:
-    def get_all_inconveniences(self, type_: int, id_: int) -> dict[str, list[str]]:
-        schedules = self._get_schedules_by_type_and_id(type_, id_)
+    def get_all_inconveniences(self, entity_type: int, schedule_id: int) -> dict[str, list[str]]:
+        schedules = self._get_schedules_by_type_and_id(entity_type, schedule_id)
         inconveniences_by_date = {}
         for key in schedules.keys():
             day_schedule = schedules[key]
@@ -52,7 +52,7 @@ class InconvenienceFinder:
 
         return inconveniences
 
-    def _get_schedules_by_type_and_id(self, type_: int, id_: int) -> dict[str, list[Event]]:  # TODO: tidy up
+    def _get_schedules_by_type_and_id(self, entity_type: int, schedule_id: int) -> dict[str, list[Event]]:  # TODO: tidy up
         """This one might seem unclear, so here's what it does step by step:
            1. Getting the iCal relevant for specific type and id from other function.
            2. Starting to iterate over the events in that iCal. It's important to note that
@@ -67,7 +67,7 @@ class InconvenienceFinder:
            dict which will later be returned. Also, the "exception dates" of all events are being taken
            into consideration.
            3. The resulting dict with all the daily schedules is returned"""
-        cal = self._get_ical_by_type_and_id(type_, id_)
+        cal = self._get_ical_by_type_and_id(entity_type, schedule_id)
         daily_calendars = defaultdict(list)  # yyyy-mm-dd: [schedule]
 
         for event in cal.events:
@@ -90,7 +90,7 @@ class InconvenienceFinder:
         return daily_calendars
 
     @staticmethod
-    def _get_ical_by_type_and_id(type_: int, id_: int) -> Calendar:
+    def _get_ical_by_type_and_id(entity_type: int, schedule_id: int) -> Calendar:
         dt = datetime.now()
         session = requests.Session()
         retry = Retry(connect=10**9, backoff_factor=0.5)  # that's right, there can be a billion reconnect attempts in case of connection failure
@@ -98,7 +98,7 @@ class InconvenienceFinder:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         r = session.get(
-            f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={type_}_{id_}',
+            f'https://schedule-of.mirea.ru/_next/data/PuqjJjkncpbeEq4Xieazm/index.json?date={dt.year}-{dt.month}-{dt.day}&s={entity_type}_{schedule_id}',
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0'})
         cal_text = r.json()['pageProps']['scheduleLoadInfo'][0]['iCalContent']
         cal = Calendar.from_ical(cal_text)
