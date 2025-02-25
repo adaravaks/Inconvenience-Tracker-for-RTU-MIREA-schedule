@@ -15,13 +15,18 @@ def determine_type(name: str) -> int:
     return 1 if any(char.isdigit() for char in name) else 2
 
 
-def ask_name() -> str:
+def ask_name() -> str:  # only used for executing locally
     s = 'Введите название группы строго в формате "АААА-00-00" или ФИО преподавателя строго в формате "Фамилия И. О.":'
     name = input(s)
     return name.strip()
 
 
 def get_inconveniences_for_everyone(finder: InconvenienceFinder) -> dict[str, dict[str, list[str]]]:  # {date: {name: [inconveniences]}}
+    """1. Pulls the credentials of every entity from the pre-created json.
+       2. Creates a lot of threads and then bombards MIREA website with requests (about 8000 in total), gathering
+       all data about everyone's schedules. (the longest step, usually takes 2-5 minutes)
+       3. Determines the inconveniences in every single entity's schedule, saving the data in a dict.
+       4. Returns the resulting dict."""
     with open('ids_by_type_and_name.json', 'r', encoding='utf-8') as f:
         ids_by_type_and_name = json.loads(f.read())
     all_inconveniences_in_mirea = {}

@@ -9,6 +9,8 @@ from icalendar.parser import Contentline
 
 class InconvenienceFinder:
     def get_all_inconveniences(self, entity_type: int, schedule_id: int) -> dict[str, list[str]]:
+        """Iterates over all days in someone's schedule, looking for possible
+           inconveniences in every single one of them"""
         schedules = self._get_schedules_by_type_and_id(entity_type, schedule_id)
         inconveniences_by_date = {}
         for key in schedules.keys():
@@ -24,6 +26,8 @@ class InconvenienceFinder:
         return sorted_ibd
 
     def _get_daily_inconveniences(self, schedule: list[Event]) -> list[str]:
+        """For each two adjacent lessons in a daily schedule, performs a series of checks
+           to determine whether something between these lessons is inconvenient or not"""
         inconveniences = []
         for i in range(len(schedule) - 1):
             lesson1 = schedule[i]
@@ -52,7 +56,7 @@ class InconvenienceFinder:
 
         return inconveniences
 
-    def _get_schedules_by_type_and_id(self, entity_type: int, schedule_id: int) -> dict[str, list[Event]]:  # TODO: tidy up
+    def _get_schedules_by_type_and_id(self, entity_type: int, schedule_id: int) -> dict[str, list[Event]]:
         """This one might seem unclear, so here's what it does step by step:
            1. Getting the iCal relevant for specific type and id from other function.
            2. Starting to iterate over the events in that iCal. It's important to note that
@@ -91,6 +95,7 @@ class InconvenienceFinder:
 
     @staticmethod
     def _get_ical_by_type_and_id(entity_type: int, schedule_id: int) -> Calendar:
+        """Makes a request for a certain entity's schedule"""
         dt = datetime.now()
         session = requests.Session()
         retry = Retry(connect=10**9, backoff_factor=0.5)  # that's right, there can be a billion reconnect attempts in case of connection failure

@@ -52,6 +52,11 @@ def get_inconvenience_changes() -> dict[str, list[dict[str, str]]]:
 
 @app.get('/current_inconveniences_for_everyone')
 def get_current_inconveniences_for_everyone(request_uuid: str = None):
+    """If no parameter is passed, forces the app to start refreshing DB inconveniences data,
+       and assigns a specific uuid to the request.
+       If that uuid is passed as a parameter, app checks on request's status. If DB has already refreshed,
+       app will respond with fresh inconveniences data. If not, however, then user will receive a message
+       saying that his request is currently being processed"""
     if request_uuid:
         status = handler.check_request_status(request_uuid)
 
@@ -61,7 +66,7 @@ def get_current_inconveniences_for_everyone(request_uuid: str = None):
         else:
             return {'status': status}
 
-    else:
+    else:  # if no uuid is passed, app creates it and assigns it to the request
         request_uuid = str(uuid.uuid4())
         is_refreshing = handler.is_currently_refreshing_data()
         handler.put_request(request_uuid)
@@ -78,6 +83,11 @@ def get_inconveniences_for_everyone() -> dict[str, dict[str, list[str]]]:
 
 @app.get("/inconveniences")
 def get_inconveniences(name: str) -> dict[str, list[str]]:
+    """Requesting the list of inconveniences of a single entity generally doesn't take more
+       than a couple seconds, so this function will always request and fetch fresh data,
+       UNLESS the app is currently processing a lot of requests (e.g. refreshing DB),
+       in which case the app will fetch data from DB, since making a request for fresh data
+       at that time would severely increase response await time"""
     if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
         inconveniences = handler.get_inconveniences(name)
     else:

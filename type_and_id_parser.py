@@ -9,6 +9,8 @@ from datetime import datetime
 
 class TypeAndIdParser:
     def __init__(self, update_json_on_init=False):
+        """There is a possibility to request the refreshing of all data
+           regarding schedule_ids of all entities"""
         self._ids_by_type_and_name = {1: {}, 2: {}}  # 1-groups, 2-professors
         if not isfile('ids_by_type_and_name.json') or update_json_on_init:
             self._parse_all_types_and_ids()
@@ -21,10 +23,13 @@ class TypeAndIdParser:
         return self._ids_by_type_and_name[str(entity_type)][name]
 
     def _json_dump_all(self) -> None:
+        """Saves collected data locally in a file"""
         with open('ids_by_type_and_name.json', 'w', encoding='utf-8') as file:
             json.dump(self._ids_by_type_and_name, file, ensure_ascii=False)
 
     def _parse_all_types_and_ids(self) -> None:
+        """Multithreadingly parses through all possible combinations of entity_type and schedule_id.
+           Takes about 2-4 minutes to finish."""
         num_of_threads = 500
         for entity_type in range(1, 3):
             for schedule_id in range(1, 6002, num_of_threads):
@@ -37,6 +42,7 @@ class TypeAndIdParser:
                     t.join()
 
     def _save_name_by_type_and_id(self, entity_type: int, schedule_id: int) -> None:
+        """Requests a specific combination of entity_type-schedule_id to determine and save the name of that entity"""
         dt = datetime.now()
         session = requests.Session()
         retry = Retry(connect=10 ** 9,backoff_factor=0.5)

@@ -22,13 +22,18 @@ class DBhandler:
         self.is_currently_rewriting_table = False
 
     def update_inconveniences_for_everyone(self, request_uuid=None) -> None:
+        """1. Gathers fresh data on everyone's inconveniences, making around 8000 requests in the
+           process, which unsurprisingly takes a lot more time than any other step (usually 2-5 minutes).
+           2. Compares the old data with the new data to determine what has changed. Saves these changes in the DB.
+           3. Truncates (deletes) old inconveniences data from DB, fills DB with the new data.
+           (App never makes any requests to the DB while it is being rewritten, instead waiting for rewrite to finish)"""
         if request_uuid:
             self.put_request(request_uuid)
 
         inconveniences = get_IfE(InconvenienceFinder())
         if request_uuid != 'LAUNCH': self._save_inconvenience_changes(inconveniences)
-        self.is_currently_rewriting_table = True
 
+        self.is_currently_rewriting_table = True
         with psycopg.connect(self.connection_string, autocommit=True) as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
@@ -52,6 +57,8 @@ class DBhandler:
         self._set_all_requests_done()
 
     def get_inconveniences_for_everyone(self) -> dict[str, dict[str, list[str]]]:
+        """Pulls all inconveniences data from DB. Before fetching data,
+           makes sure that app isn't currently meddling with the tables"""
         with psycopg.connect(self.connection_string, autocommit=True) as conn:
             while self.is_currently_rewriting_table:  # if I fetch the data while the table is being rewritten, that data will be incomplete
                 time.sleep(1)
@@ -71,6 +78,8 @@ class DBhandler:
         return inconveniences
 
     def get_inconveniences(self, name: str) -> dict[str, list[str]]:
+        """Pulls data about inconveniences of a single entity from DB. Before fetching data,
+           makes sure that app isn't currently meddling with the tables"""
         with psycopg.connect(self.connection_string, autocommit=True) as conn:
             while self.is_currently_rewriting_table:  # if I fetch the data while the table is being rewritten, that data will be incomplete
                 time.sleep(1)
@@ -90,6 +99,7 @@ class DBhandler:
         return inconveniences
 
     def get_inconvenience_changes(self) -> list[dict[str]]:
+        """From DB pulls all data regarding changes in inconveniences"""
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
@@ -108,6 +118,7 @@ class DBhandler:
         return changes
 
     def put_request(self, request_uuid: str) -> None:
+        """Puts into DB a request for refreshing data in the inconveniences table"""
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cursor:
                 curr_dt = datetime.now()
@@ -120,6 +131,7 @@ class DBhandler:
                 ''', values)
 
     def check_request_status(self, request_uuid: str) -> str:
+        """Checks the status of a request for refreshing data in the inconveniences table"""
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
@@ -131,6 +143,7 @@ class DBhandler:
         return status[0] if status else 'Запрос не найден'
 
     def is_currently_refreshing_data(self) -> bool:
+        """Checks whether the app is currently working on at least one of the refresh-requests"""
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
@@ -142,6 +155,13 @@ class DBhandler:
         return len(response) > 0
 
     def _save_inconvenience_changes(self, new_inconveniences: dict[str, dict[str, list[str]]]) -> None:
+        """1. Iterates over the old list, looking for identical inconvenience in the new list.
+           If not found, then the inconvenience has disappeared - data is saved into DB.
+           If found, then the inconvenience persists - data is ignored.
+
+           2.Iterates over the new list, looking for identical inconvenience in the old list.
+           If not found, then the inconvenience has just appeared - data is saved into DB.
+           If found, then the inconvenience has been there before - data is ignored."""
         old_inconveniences = self.get_inconveniences_for_everyone()
         with (psycopg.connect(self.connection_string) as conn):
             with conn.cursor() as cursor:
@@ -165,6 +185,7 @@ class DBhandler:
 
     @staticmethod
     def _save_change(cursor, dt_noticed, change_type, name, inconvenience_date, message):
+        """Saves data about inconvenience change into DB"""
         cursor.execute('''
         INSERT INTO inconvenience_changes
         (dt_noticed, change_type, entity_name, inconvenience_date, message)
@@ -172,6 +193,7 @@ class DBhandler:
         ''', (dt_noticed, change_type, name, inconvenience_date, message))
 
     def _set_all_requests_done(self) -> None:
+        """Marks all refresh-requests as finished"""
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cursor:
                 values = ('Обработка завершена', datetime.now(), 'Обработка в процессе...')
@@ -183,6 +205,7 @@ class DBhandler:
 
     @staticmethod
     def _get_start_dt(start_date: str, inconvenience_msg: str) -> str:
+        """Combines the occurrence date of the inconvenience with its start time and returns the exact datetime"""
         interval = inconvenience_msg.split()[-1]  # (00:00-12:00)
         start_time = interval.split('-')[0].strip('(')  # 00:00
         return start_date + ' ' + start_time
