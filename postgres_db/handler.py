@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 sys.path.append(os.getcwd())  # prevents a nasty ModuleNotFoundError for imports below
 from inconvenience_finder import InconvenienceFinder
-from main import determine_type, get_inconveniences_for_everyone as get_IfE
+from execution_helper import determine_type, get_inconveniences_for_everyone as get_IfE
 
 
 class DBhandler:

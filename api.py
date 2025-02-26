@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())  # prevents a nasty ModuleNotFoundError for imports
 from postgres_db.handler import DBhandler
 from type_and_id_parser import TypeAndIdParser
 from inconvenience_finder import InconvenienceFinder
-from main import determine_type
+from execution_helper import determine_type
 
 
 handler = DBhandler()
