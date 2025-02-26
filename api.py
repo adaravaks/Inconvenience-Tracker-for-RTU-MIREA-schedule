@@ -18,7 +18,7 @@ handler = DBhandler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # before the app starts taking requests, it will load/refresh db data
-    #TypeAndIdParser(update_json_on_init=True)
+    TypeAndIdParser(update_json_on_init=True)
     handler.update_inconveniences_for_everyone(request_uuid='LAUNCH')
     yield
 
@@ -45,9 +45,9 @@ scheduler.add_job(refresh_db_data, 'interval', hours=4)  # db data will be refre
 
 
 @app.get('/inconvenience_changes')
-def get_inconvenience_changes() -> dict[str, list[dict[str, str]]]:
+def get_inconvenience_changes() -> list[dict[str, str]]:
     changes = handler.get_inconvenience_changes()
-    return {'changes': changes}
+    return changes
 
 
 @app.get('/current_inconveniences_for_everyone')
@@ -88,12 +88,15 @@ def get_inconveniences(name: str) -> dict[str, list[str]]:
        UNLESS the app is currently processing a lot of requests (e.g. refreshing DB),
        in which case the app will fetch data from DB, since making a request for fresh data
        at that time would severely increase response await time"""
-    if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
-        inconveniences = handler.get_inconveniences(name)
-    else:
-        finder = InconvenienceFinder()
-        id_parser = TypeAndIdParser()
-        entity_type = determine_type(name)
-        schedule_id = id_parser.get_id(entity_type, name)
-        inconveniences = finder.get_all_inconveniences(entity_type, schedule_id)
-    return inconveniences
+    try:
+        if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
+            inconveniences = handler.get_inconveniences(name)
+        else:
+            finder = InconvenienceFinder()
+            id_parser = TypeAndIdParser()
+            entity_type = determine_type(name)
+            schedule_id = id_parser.get_id(entity_type, name)
+            inconveniences = finder.get_all_inconveniences(entity_type, schedule_id)
+        return inconveniences
+    except KeyError:  # If no schedule data for inputted name is found
+        return {}
