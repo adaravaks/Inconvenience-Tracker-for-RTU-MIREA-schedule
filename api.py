@@ -2,7 +2,9 @@ import os
 import sys
 import uuid
 from contextlib import asynccontextmanager
+from typing import Dict, List
 
+from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 
@@ -24,7 +26,7 @@ async def lifespan(app: FastAPI):  # before the app starts taking requests, it w
 
 
 app = FastAPI(lifespan=lifespan)
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(executors={'default': ThreadPoolExecutor(max_workers=1)})  # due to max_workers=1, the app will start updating db data only after finishing updating id data
 scheduler.start()
 
 
@@ -82,7 +84,7 @@ def get_inconveniences_for_everyone() -> dict[str, dict[str, list[str]]]:
 
 
 @app.get("/inconveniences")
-def get_inconveniences(name: str) -> dict[str, list[str]]:
+def get_inconveniences(name: str) -> dict[str, list[str]] | dict[str, str]:
     """Requesting the list of inconveniences of a single entity generally doesn't take more
        than a couple seconds, so this function will always request and fetch fresh data,
        UNLESS the app is currently processing a lot of requests (e.g. refreshing DB),
@@ -99,4 +101,4 @@ def get_inconveniences(name: str) -> dict[str, list[str]]:
             inconveniences = finder.get_all_inconveniences(entity_type, schedule_id)
         return inconveniences
     except KeyError:  # If no schedule data for inputted name is found
-        return {}
+        return {'message': 'Сущность не найдена. Убедитесь, что параметр запроса строго соответствует формату «АААА-00-00» или «Фамилия И. О.»'}

@@ -1,5 +1,5 @@
 # Inconvenience Tracker for RTU MIREA schedule
-###### Stack: Python, FastAPI, APScheduler, PostgreSQL (through psycopg3), Git, Docker + Compose
+###### Stack: Python, FastAPI, APScheduler, PostgreSQL (via psycopg3), Git, Docker + Compose
 
 This is an app designed to <ins>search</ins> for, <ins>keep track</ins> of and <ins>display</ins> different inconveniences in the schedule of RTU MIREA
 
@@ -8,6 +8,8 @@ The intended way of communication with the app is through its API.
 It has four different endpoints:
 
 ```GET /inconveniences?name=``` (parameter is required) <br>
+***Important: the name of entity must strictly follow pattern of either "АААА-00-00" for student groups or "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive***
+
 Responds with JSON containing inconveniences in schedule of a single entity.
 The JSON is sorted by dates, from the start of the semester to the end of it. 
 Each date correlates to a list, containing inconveniences occurring at that date, sorted by time.
