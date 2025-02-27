@@ -41,7 +41,7 @@ The changes are sorted by datetime when they were noticed by the app in descendi
 ## How to launch
 0. Make sure your machine has Git and Docker installed. Make sure your Docker daemon is currently running. (100% sure way is to just launch Docker Desktop app)
 1. Open the terminal. Run ```git clone https://github.com/adaravaks/Inconvenience-Tracker-for-RTU-MIREA-schedule```
-2. Run ```cd Inconvenience-Tracker-for-RTU-MIREA-schedule``` 
+2. Enter the project directory (on Windows, run ```cd Inconvenience-Tracker-for-RTU-MIREA-schedule```) 
 3. Run ```docker compose build```
 4. Run ```docker compose up -d```
 5. Wait for about 5 minutes for the app to launch. The startup *does* need to take that long, since one of the project requirements was that the app must update and refresh all its data on startup, and that, as I have already said, takes quite some time. So bear with it, be a man.

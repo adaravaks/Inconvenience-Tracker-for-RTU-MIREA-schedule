@@ -42,8 +42,8 @@ def refresh_id_data() -> None:
     print('INFO: id data refreshed')
 
 
-scheduler.add_job(refresh_id_data, 'interval', hours=3)  # same as db data but doesn't refresh on startup
-scheduler.add_job(refresh_db_data, 'interval', hours=4)  # db data will be refreshed on startup and then every 4 hours
+scheduler.add_job(refresh_id_data, 'interval', hours=4)  # id data will be refreshed on startup and then every 4 hours
+scheduler.add_job(refresh_db_data, 'interval', hours=4)  # same as id data
 
 
 @app.get('/inconvenience_changes')

@@ -33,6 +33,9 @@ class InconvenienceFinder:
             lesson1 = schedule[i]
             lesson2 = schedule[i + 1]
 
+            if lesson2.start < lesson1.end:  # sometimes 2 lessons are placed as simultaneous in the schedule
+                continue
+
             if self._check_for_window(lesson1, lesson2):
                 time1 = str(lesson1.end)[11:16]
                 time2 = str(lesson2.start)[11:16]
