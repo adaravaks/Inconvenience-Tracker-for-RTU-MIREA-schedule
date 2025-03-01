@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):  # before the app starts taking requests, it w
 
 
 app = FastAPI(lifespan=lifespan)
-scheduler = BackgroundScheduler(executors={'default': ThreadPoolExecutor(max_workers=1)})  # due to max_workers=1, the app will start updating db data only after finishing updating id data
+scheduler = BackgroundScheduler(executors={'default': ThreadPoolExecutor(max_workers=1)})  # due to max_workers=1, the app will start auto-updating db data only after finishing auto-updating id data
 scheduler.start()
 
 
@@ -46,10 +46,41 @@ scheduler.add_job(refresh_id_data, 'interval', hours=4)  # id data will be refre
 scheduler.add_job(refresh_db_data, 'interval', hours=4)  # same as id data
 
 
-@app.get('/inconvenience_changes')
-def get_inconvenience_changes() -> list[dict[str, str]]:
-    changes = handler.get_inconvenience_changes()
-    return changes
+@app.get("/inconveniences")
+def get_inconveniences(name: str) -> dict[str, list[str]] | dict[str, str]:
+    """Responds with JSON containing inconveniences in schedule of a single entity.
+       The name of entity must strictly follow pattern of either "АААА-00-00" for student groups or
+       "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive.
+       Requesting the list of inconveniences of a single entity generally doesn't take more
+       than a couple seconds, so this endpoint will always request and fetch fresh data,
+       UNLESS the app is currently processing a lot of requests (e.g. refreshing DB),
+       in which case the app will fetch data from DB, since making a request for fresh data
+       at that time would severely increase response await time"""
+    try:
+        if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
+            inconveniences = handler.get_inconveniences(name)
+        else:
+            finder = InconvenienceFinder()
+            id_parser = TypeAndIdParser()
+            entity_type = determine_type(name)
+            schedule_id = id_parser.get_id(entity_type, name)
+            inconveniences = finder.get_all_inconveniences(entity_type, schedule_id)
+        return inconveniences
+    except KeyError:  # If no schedule data for inputted name is found
+        return {'message': 'Сущность не найдена. Убедитесь, что параметр запроса строго соответствует формату «АААА-00-00» или «Фамилия И. О.»'}
+
+
+@app.get('/inconveniences_for_everyone')
+def get_inconveniences_for_everyone() -> dict[str, dict[str, list[str]]]:
+    """Same as /inconveniences, but returns inconveniences for every professor and every student group in MIREA.
+       Always pulls data from DB, so you might think that this data is likely
+       irrelevant and can't be trusted, but that's just not true. While DB data is
+       not always fresh, it never gets outdated by more than 4 hours.
+       Inconvenience Tracker refreshes all schedule data and rewrites DB based on it
+       at least 6 times a day (but in reality even more due to
+       how GET /current_inconveniences_for_everyone works)"""
+    inconveniences = handler.get_inconveniences_for_everyone()
+    return inconveniences
 
 
 @app.get('/current_inconveniences_for_everyone')
@@ -77,28 +108,10 @@ def get_current_inconveniences_for_everyone(request_uuid: str = None):
         return {'request_uuid': request_uuid}
 
 
-@app.get('/inconveniences_for_everyone')
-def get_inconveniences_for_everyone() -> dict[str, dict[str, list[str]]]:
-    inconveniences = handler.get_inconveniences_for_everyone()
-    return inconveniences
-
-
-@app.get("/inconveniences")
-def get_inconveniences(name: str) -> dict[str, list[str]] | dict[str, str]:
-    """Requesting the list of inconveniences of a single entity generally doesn't take more
-       than a couple seconds, so this function will always request and fetch fresh data,
-       UNLESS the app is currently processing a lot of requests (e.g. refreshing DB),
-       in which case the app will fetch data from DB, since making a request for fresh data
-       at that time would severely increase response await time"""
-    try:
-        if handler.is_currently_refreshing_data() and not handler.is_currently_rewriting_table:
-            inconveniences = handler.get_inconveniences(name)
-        else:
-            finder = InconvenienceFinder()
-            id_parser = TypeAndIdParser()
-            entity_type = determine_type(name)
-            schedule_id = id_parser.get_id(entity_type, name)
-            inconveniences = finder.get_all_inconveniences(entity_type, schedule_id)
-        return inconveniences
-    except KeyError:  # If no schedule data for inputted name is found
-        return {'message': 'Сущность не найдена. Убедитесь, что параметр запроса строго соответствует формату «АААА-00-00» или «Фамилия И. О.»'}
+@app.get('/inconvenience_changes')
+def get_inconvenience_changes() -> list[dict[str, str]]:
+    """This one is different from the rest, as the response
+       contains not current inconveniences, but rather the changes
+       that the app has noticed while updating/refreshing schedule data."""
+    changes = handler.get_inconvenience_changes()
+    return changes
