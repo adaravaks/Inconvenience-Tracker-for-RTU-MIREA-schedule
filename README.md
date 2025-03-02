@@ -36,6 +36,9 @@ When the schedule data is updated and refreshed, passing that same request_uuid 
 but containing totally fresh and relevant data.
 
 ```GET /inconvenience_changes``` <br>
+> [!IMPORTANT]
+> Upon the first launch, this endpoint will return an empty list. Changes can only be noticed and saved after refreshing DB data at least once. 
+
 This one is different from the rest, as the response contains not current inconveniences,
 but rather the *changes* that the app has noticed while updating/refreshing schedule data.
 
