@@ -3,6 +3,10 @@
 
 This is an app designed to <ins>search</ins> for, <ins>keep track</ins> of and <ins>display</ins> different inconveniences in the schedule of RTU MIREA
 
+There is also a [video presentation (in Telegram)](https://t.me/inconvenience_tracker_video/2) for this project.
+The video is 6 minutes long and it serves as a quick overview of all the main features of Inconvenience Tracker.
+I would advise you to watch the video first, and then get back to the repository.
+
 ## Functionality
 The intended way of communication with the app is through its API. 
 It has four different endpoints:
