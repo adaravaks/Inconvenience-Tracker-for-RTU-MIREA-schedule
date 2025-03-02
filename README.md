@@ -8,7 +8,8 @@ The intended way of communication with the app is through its API.
 It has four different endpoints:
 
 ```GET /inconveniences?name=``` (parameter is required) <br>
-***Important: the name of entity must strictly follow pattern of either "АААА-00-00" for student groups or "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive***
+> [!IMPORTANT]
+> The name of entity must strictly follow pattern of either "АААА-00-00" for student groups or "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive
 
 Responds with JSON containing inconveniences in schedule of a single entity.
 The JSON is sorted by dates, from the start of the semester to the end of it. 
@@ -20,11 +21,16 @@ Same as previous endpoint, but returns inconveniences for every professor and ev
 The structure is as follows: {date: {name: [inconveniences]}}
 
 ```GET /current_inconveniences_for_everyone?request_uuid=``` (parameter is optional) <br>
-***Warning: takes a lot of time to load data (usually 2-4 minutes)***<br>
+> [!NOTE]
+> Takes some time to load data (usually 2-4 minutes)
+
 Similar to previous, but forces the app to request and process fresh data from MIREA website, accounting for possible changes the schedule may have had.
 Schedule for each entity has to be requested separately and there are about 8000 entities in total, thus such a long runtime.
 
-***Important: processing the request takes quite some time, but the response is IMMEDIATE.***
+> [!IMPORTANT]
+> Processing the request takes some time, but the response is *immediate*
+
+
 The response contains request_uuid, which you can then pass as a parameter to the same endpoint, and it will keep you updated on the status of your request.
 When the schedule data is updated and refreshed, passing that same request_uuid to that same endpoint will result in a JSON structured same way as in previous endpoint,
 but containing totally fresh and relevant data.
@@ -39,21 +45,35 @@ the app will notice that and save the data about that change. The structure of r
 The changes are sorted by datetime when they were noticed by the app in descending order, so basically most recently noticed are first.
 
 ## How to launch
-0. Make sure your machine has Git and Docker installed. Make sure your Docker daemon is currently running. (100% sure way is to just launch Docker Desktop app)
-1. Open the terminal. Run ```git clone https://github.com/adaravaks/Inconvenience-Tracker-for-RTU-MIREA-schedule```
+0. Make sure your machine has Git and Docker installed. Make sure your Docker daemon is currently running (100% sure way is to just launch Docker Desktop app). Make sure port 5432 is *not* currently used by any service on your machine (since Tracker's DB will use that port)
+1. Open the terminal. Run the following prompt:
+```
+git clone https://github.com/adaravaks/Inconvenience-Tracker-for-RTU-MIREA-schedule
+```
 2. Enter the project directory (on Windows, run ```cd Inconvenience-Tracker-for-RTU-MIREA-schedule```) 
-3. Run ```docker compose build```
-4. Run ```docker compose up -d```
+3. Run: 
+```
+docker compose build
+```
+4. Run: 
+```
+docker compose up -d
+```
 5. Wait for about 5 minutes for the app to launch. The startup *does* need to take that long, since one of the project requirements was that the app must update and refresh all its data on startup, and that, as I have already said, takes quite some time. So bear with it, be a man.
 6. Try accessing ```http://localhost/docs``` to see whether the app has launched or not yet. (or ```<domain-name>/docs``` if you're deploying the app on a remote server)
 7. Once the page loads, the app is fully functional. Feel free to utilise it as you please!
 
-If you want to shut down the app, run ```docker compose down```
+If you want to shut down the app, run: 
+```
+docker compose down
+```
 
 ## About branches
-***Important: the branch "master" is the only one that represents the final product. If you're deploying the app, use the master branch***
+> [!IMPORTANT]
+> The branch "master" is the only one that represents the final product
 
-Branches other than master represent the state of the project during development. For example, branch "level_2"
+
+If you're deploying the app, use the master branch. Branches other than master represent the state of the project during development. For example, branch "level_2"
 corresponds to what was required to be implemented on level 2. More explanation about these levels below
 
 ## About project requirements
@@ -70,7 +90,8 @@ Let's dive deeper into the requirements for each level:
 
 «Сборка в docker образ, загрузка его на публичный dockerhub, создание docker-compose файла.» <br>
 **-- Fully implemented [(dockerhub)](https://hub.docker.com/repository/docker/adaravaks/inconvenience-finder-for-rtu-mirea-schedule/general) --** <br>
-*Note: dockerhub only supports singular docker images in its repositories, but starting from level 2 my app runs as a docker compose stack of 2 images, so **there is only "level 1" version** of Inconvenience Tracker on dockerhub*
+> [!NOTE]
+> Dockerhub only supports singular docker images in its repositories, but starting from level 2 my app runs as a docker compose stack of 2 images, so there is only "level 1" version of Inconvenience Tracker on dockerhub
 
 ### Level 2
 «В сервисе реализовать background работу, которая применяет разработанные вами методы к расписанию и сохраняет результаты работы в БД. Она должна запускаться при запуске сервиса, а также по определнному расписанию.» <br>
@@ -93,8 +114,8 @@ Let's dive deeper into the requirements for each level:
 
 «Нужно сделать так, чтобы сервис мог одновременно обрабатывать только один запрос, а остальные становились в очередь на ожидание. Клиентам соответственно по id такого запроса будет отдаваться статус "в очереди". В случае получения двух и более одинаковых запросов следует отдавать им один идентификатор, чтобы не выполнять одну и ту же операцию дважды.» <br>
 **-- Partially implemented --** <br>
-*Note: while working on optimisation, I had the same idea but took different approach.
-Further explanation below.*
+> [!NOTE]
+> While working on optimisation, I had the same idea but took different approach. Further explanation below.
 
 ## The balance between time optimisation and data relevancy
 Basically, levels 1 and 3 require the app to return relevant data at the cost of increased response time,
