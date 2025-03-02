@@ -10,7 +10,7 @@ I would advise you to watch the video first, and then get back to the repository
 ## Functionality
 The intended way of communication with the app is through its API. 
 It has four different endpoints:
-
+<br><br><br><br>
 ```GET /inconveniences?name=``` (parameter is required) <br>
 > [!IMPORTANT]
 > The name of entity must strictly follow pattern of either "АААА-00-00" for student groups or "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive
@@ -19,11 +19,11 @@ Responds with JSON containing inconveniences in schedule of a single entity.
 The JSON is sorted by dates, from the start of the semester to the end of it. 
 Each date correlates to a list, containing inconveniences occurring at that date, sorted by time.
 So basically the structure is as follows: {date: [inconveniences]}
-
+<br><br><br><br>
 ```GET /inconveniences_for_everyone``` <br>
 Same as previous endpoint, but returns inconveniences for every professor and every student group in MIREA.
 The structure is as follows: {date: {name: [inconveniences]}}
-
+<br><br><br><br>
 ```GET /current_inconveniences_for_everyone?request_uuid=``` (parameter is optional) <br>
 > [!NOTE]
 > Takes some time to load data (usually 2-4 minutes)
@@ -38,7 +38,7 @@ Schedule for each entity has to be requested separately and there are about 8000
 The response contains request_uuid, which you can then pass as a parameter to the same endpoint, and it will keep you updated on the status of your request.
 When the schedule data is updated and refreshed, passing that same request_uuid to that same endpoint will result in a JSON structured same way as in previous endpoint,
 but containing totally fresh and relevant data.
-
+<br><br><br><br>
 ```GET /inconvenience_changes``` <br>
 > [!IMPORTANT]
 > Upon the first launch, this endpoint will return an empty list. Changes can only be noticed and saved after refreshing DB data at least once. 
