@@ -10,16 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: PostgresPassword505
-        ports:
-          - 5432:5432
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
