@@ -11,7 +11,7 @@ I would advise you to watch the video first, and then get back to the repository
 The intended way of communication with the app is through its API. 
 It has four different endpoints:
 <br><br><br><br>
-```GET /inconveniences?name=``` (parameter is required) <br>
+### ```GET /inconveniences?name=``` (parameter is required) <br>
 > [!IMPORTANT]
 > The name of entity must strictly follow pattern of either "АААА-00-00" for student groups or "Фамилия И. О." for professors. Parameter field is case-sensitive and punctuation-sensitive
 
@@ -19,12 +19,18 @@ Responds with JSON containing inconveniences in schedule of a single entity.
 The JSON is sorted by dates, from the start of the semester to the end of it. 
 Each date correlates to a list, containing inconveniences occurring at that date, sorted by time.
 So basically the structure is as follows: {date: [inconveniences]}
+
+![Screenshot of the response](https://github.com/user-attachments/assets/d75616ae-bca2-404f-9654-6aeec43765c5)
+
 <br><br><br><br>
-```GET /inconveniences_for_everyone``` <br>
+### ```GET /inconveniences_for_everyone``` <br>
 Same as previous endpoint, but returns inconveniences for every professor and every student group in MIREA.
 The structure is as follows: {date: {name: [inconveniences]}}
+
+![Screenshot of the response](https://github.com/user-attachments/assets/9e76d4f5-a91f-433e-821e-8ad3b2729e6a)
+
 <br><br><br><br>
-```GET /current_inconveniences_for_everyone?request_uuid=``` (parameter is optional) <br>
+### ```GET /current_inconveniences_for_everyone?request_uuid=``` (parameter is optional) <br>
 > [!NOTE]
 > Takes some time to load data (usually 2-4 minutes)
 
@@ -38,8 +44,16 @@ Schedule for each entity has to be requested separately and there are about 8000
 The response contains request_uuid, which you can then pass as a parameter to the same endpoint, and it will keep you updated on the status of your request.
 When the schedule data is updated and refreshed, passing that same request_uuid to that same endpoint will result in a JSON structured same way as in previous endpoint,
 but containing totally fresh and relevant data.
+
+![Screenshot of the response](https://github.com/user-attachments/assets/f66a63a2-a941-4019-83aa-3f86c024cefe)
+
+![Screenshot of the response](https://github.com/user-attachments/assets/2b11c235-7450-4e0d-9f1c-c328ef5c10d2)
+
+![Screenshot of the response](https://github.com/user-attachments/assets/09620c3f-0142-4e93-9de4-74149a72c272)
+
+
 <br><br><br><br>
-```GET /inconvenience_changes``` <br>
+### ```GET /inconvenience_changes``` <br>
 > [!IMPORTANT]
 > Upon the first launch, this endpoint will return an empty list. Changes can only be noticed and saved after refreshing DB data at least once. 
 
@@ -50,6 +64,9 @@ For example, if the schedule has updated and some professor is now experiencing 
 the app will notice that and save the data about that change. The structure of response is like this:
 [ {data keys and values relevant for a specific change} ].<br>
 The changes are sorted by datetime when they were noticed by the app in descending order, so basically most recently noticed are first.
+
+![Screenshot of the response](https://github.com/user-attachments/assets/81f91e96-35ee-4022-916c-0a90386951b5)
+
 
 ## How to launch
 0. Make sure your machine has Git and Docker installed. Make sure your Docker daemon is currently running (100% sure way is to just launch Docker Desktop app). Make sure port 5432 is *not* currently used by any service on your machine (since Tracker's DB will use that port)
